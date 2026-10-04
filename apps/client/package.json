@@ -1,0 +1,20 @@
+{
+  "name": "@zeldasys/client",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json --noEmit && vite build",
+    "dev": "vite",
+    "preview": "vite preview",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@zeldasys/domain": "workspace:*",
+    "@zeldasys/geometry": "workspace:*",
+    "@zeldasys/physics": "workspace:*",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "three": "0.186.0"
+  }
+}
