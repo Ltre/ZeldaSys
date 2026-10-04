@@ -1,3 +1,4 @@
 doc/
 README.md
 pnpm-lock.yaml
+apps/client/src/ui/styles.css
