@@ -177,7 +177,111 @@ AI 将核心问题拆成：
 
 从本次开始，本文件尾部固定保留：
 
-`## 原始问答记录（固定追加区）`
+`## 2026-10-04 — 技术选型与正式 Roadmap
+
+### 技术基线
+
+正式选择：
+
+- TypeScript；
+- React：只负责 UI；
+- Vite；
+- Three.js；
+- MVP 使用 WebGLRenderer；
+- Rapier 3D / WASM；
+- IndexedDB + Dexie；
+- vite-plugin-pwa / Workbox；
+- Capacitor stable；
+- pnpm workspace；
+- Vitest；
+- Playwright。
+
+服务端首版仍不创建。
+
+### 架构决策
+
+核心分层：
+
+`Domain -> RenderAdapter(Three) / PhysicsAdapter(Rapier)`
+
+React 不保存每帧物理 Transform，也不让 React render cycle 驱动物理步进。
+
+领域模型不得持久化：
+
+- Three Object3D；
+- Rapier rigid-body handle；
+- collider handle；
+- joint handle。
+
+这些都属于可重建 runtime。
+
+### Three.js 选择理由
+
+- 官方 SVGLoader 可作为受限 SVG 输入链路基础；
+- Shape / holes / ExtrudeGeometry 直接覆盖二维轮廓挤出；
+- Raycaster 可提供表面 picking；
+- 与独立 Rapier 物理层组合后，领域层耦合较低。
+
+MVP 使用 WebGLRenderer；WebGPURenderer 后期再评估，因为 Three 官方目前仍把后者标记为 experimental。
+
+### Rapier 选择理由
+
+直接提供：
+
+- rigid body；
+- CCD；
+- fixed joint；
+- revolute joint；
+- prismatic joint；
+- joint motor；
+- ray cast；
+- shape cast；
+- point projection；
+- convex decomposition / compound collider。
+
+这与首版：
+
+- 任意表面粘合；
+- Wheel；
+- Motor；
+- Fan；
+- SVG 动态非凸零件
+
+高度对应。
+
+Babylon.js + Havok 作为第一物理 / 引擎备选。如果 Rapier 的 Android 性能或复杂约束稳定性 PoC 失败，再切换评估，而不是提前增加一体化引擎耦合。
+
+### Android 选择理由
+
+首版使用 Capacitor，因为当前只验证 PWA / Android：
+
+- 同一份 Web bundle；
+- Android Studio 标准工程；
+- 可增加 Kotlin 原生插件；
+- 路径比现在引入 Tauri + Rust 更短。
+
+Tauri 留作未来 Windows / Linux / macOS 桌面阶段重新评估。
+
+### 正式 Roadmap
+
+已写入：
+
+- `doc/prompt/idea/first/technology-selection-v0.md`
+- `doc/roadmap/master/Initial Development Plans.md`
+- `doc/roadmap/master/Remaining Development Plans.md`
+
+Roadmap 的第一个产品开发 Gate 不是 UI，而是四个高风险 PoC：
+
+1. Rapier 约 50 零件物理性能；
+2. 任意表面粘合与 FixedJoint；
+3. SVG -> Extrude -> dynamic collider；
+4. PWA / Capacitor Android 同源运行。
+
+四项都通过后再冻结技术栈并进入完整 MVP 实现。
+
+---
+
+## 原始问答记录（固定追加区）`
 
 规则：
 
@@ -345,3 +449,50 @@ Commit：`13bc2d7c190e0fbf00bc539ce5c9f0d26f98692e`
 `doc/prompt/idea/first/case-study-research-v0.md`
 
 QA 日志规则也已经调整：文件尾部固定为“原始问答记录（固定追加区）”，按 `YYMMDD-N` 编号；今天前面的正式问答也会回填。以后每次保存你的原始问题和我的最终答复，不再需要你从网页手动复制；工具调用、进度播报和隐藏内部思维链不会混进原始问答区。
+
+
+[编号261004-4]问：
+
+好的，同意，继续
+
+答：
+
+已继续完成“技术选型 + 正式 roadmap”，并提交到 `dev/2610-s1`。
+
+首版技术栈确定为：
+
+- TypeScript + React + Vite；
+- Three.js / WebGLRenderer；
+- Rapier 3D WebAssembly；
+- IndexedDB + Dexie；
+- vite-plugin-pwa / Workbox；
+- Capacitor Android；
+- Vitest + Playwright；
+- pnpm workspace。
+
+关键架构原则是 React 只负责 UI，Three.js / Rapier 使用独立 runtime，领域数据不绑定渲染对象和物理 handle。
+
+选择 Three.js 的主要原因是 SVGLoader、Shape/holes、ExtrudeGeometry、Raycaster 与 ZeldaSys 的 SVG 自定义零件和任意表面连接非常吻合。Rapier 则直接支持 Fixed / Revolute / Prismatic joints、joint motor、scene query、convex decomposition 等首版能力。
+
+MVP 先用 WebGLRenderer，不把仍处于 experimental 状态的 WebGPURenderer 作为首版依赖。
+
+Android 首版使用 Capacitor；Tauri 留到未来桌面平台再评估。
+
+正式路线已经写入：
+
+- `doc/prompt/idea/first/technology-selection-v0.md`
+- `doc/roadmap/master/Initial Development Plans.md`
+- `doc/roadmap/master/Remaining Development Plans.md`
+
+技术 / roadmap 提交：
+
+`8cb83f9737fa0adb22e9793b7f486d53854242f0`
+
+路线把四个高风险 PoC 放在完整 UI 之前：
+
+1. 50 零件 Rapier 性能；
+2. 任意表面粘合；
+3. SVG -> 3D -> dynamic collider；
+4. Capacitor Android 真机同源运行。
+
+四项全部通过 Gate-1 后，才正式冻结技术栈进入完整 MVP。
