@@ -123,3 +123,56 @@ textarea {
     text-align: center;
   }
 }
+
+.poc-panel {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  display: grid;
+  gap: 8px;
+  max-width: min(560px, calc(100% - 24px));
+  padding: 12px;
+  border: 1px solid rgb(148 163 184 / 18%);
+  border-radius: 10px;
+  background: rgb(15 23 42 / 88%);
+  backdrop-filter: blur(10px);
+}
+
+.poc-panel > div {
+  display: grid;
+  gap: 3px;
+}
+
+.poc-panel span,
+.poc-panel output {
+  color: #cbd5e1;
+  font-size: 0.78rem;
+}
+
+.poc-panel button {
+  width: fit-content;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid #38bdf8;
+  border-radius: 8px;
+  color: #e0f2fe;
+  background: #075985;
+  cursor: pointer;
+}
+
+.poc-panel button:disabled {
+  cursor: progress;
+  opacity: 0.65;
+}
+
+.poc-panel .poc-error {
+  color: #fca5a5;
+}
+
+@media (max-width: 720px) {
+  .poc-panel {
+    top: 8px;
+    left: 8px;
+    max-width: calc(100% - 16px);
+  }
+}

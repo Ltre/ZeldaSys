@@ -4,6 +4,7 @@ import { PHYSICS_PACKAGE_READY } from '@zeldasys/physics';
 import { useEffect, useRef } from 'react';
 
 import { ThreeViewport } from '../runtime/ThreeViewport';
+import { PocAPanel } from './PocAPanel';
 
 export function App() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -41,6 +42,7 @@ export function App() {
       </header>
       <section className="viewport-panel" aria-label="3D build viewport">
         <canvas ref={canvasRef} className="viewport-canvas" />
+        <PocAPanel />
         <div className="viewport-hint">
           Three.js runtime is isolated from React UI state.
         </div>
