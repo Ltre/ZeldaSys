@@ -14,7 +14,7 @@
 - 构建：Vite
 - 3D：Three.js
 - 首版渲染器：Three.js WebGLRenderer
-- 物理：@dimforge/rapier3d-compat-compat（WebAssembly）
+- 物理：@dimforge/rapier3d-compat（WebAssembly）
 - 本地数据库：IndexedDB + Dexie
 - PWA：vite-plugin-pwa / Workbox
 - Android：Capacitor

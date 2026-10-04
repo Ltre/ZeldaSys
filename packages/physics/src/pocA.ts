@@ -10,7 +10,7 @@ export const POC_A_REVOLUTE_JOINT_COUNT = 4;
 export const POC_A_MOTOR_COUNT = 2;
 export const POC_A_FAN_COUNT = 2;
 
-type RapierModule = typeof import('@dimforge/rapier3d-compat')['default'];
+type RapierModule = (typeof import('@dimforge/rapier3d-compat'))['default'];
 
 let rapierModulePromise: Promise<RapierModule> | null = null;
 
