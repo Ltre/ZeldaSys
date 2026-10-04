@@ -14,7 +14,7 @@
 - 构建：Vite
 - 3D：Three.js
 - 首版渲染器：Three.js WebGLRenderer
-- 物理：@dimforge/rapier3d（WebAssembly）
+- 物理：@dimforge/rapier3d-compat-compat（WebAssembly）
 - 本地数据库：IndexedDB + Dexie
 - PWA：vite-plugin-pwa / Workbox
 - Android：Capacitor
@@ -181,6 +181,25 @@ Rapier 支持：
 
 - https://rapier.rs/docs/user_guides/javascript/colliders/
 - https://rapier.rs/javascript3d/classes/ColliderDesc.html
+
+
+### 4.5 Bundler / WASM 发行包选择
+
+Phase 1 PoC-A 的第一次真实 CI 验证发现：`@dimforge/rapier3d@0.21.0` 在当前 Vitest/Vite ESM 链路中无法解析 package entry。
+
+因此 MVP 改用官方提供的：
+
+> `@dimforge/rapier3d-compat@0.21.0`
+
+该兼容发行版把 WASM 以 base64 内嵌到 JavaScript 中，代价是包体更大，但官方明确将它作为 bundler 无法正确处理 WASM 时的兼容方案。ZeldaSys 当前更重视 PWA / Android WebView / 测试链路的一致可加载性，因此接受这一包体成本。
+
+兼容包初始化必须显式：
+
+`await RAPIER.init()`
+
+运行时使用单例 Promise 保证只初始化一次。
+
+未来若确认 Vite、Vitest、Capacitor 全链路能稳定支持独立 WASM 文件，可重新评估切回非 compat 包以减小 JavaScript 包体。
 
 ## 5. 为什么不首选 Babylon.js + Havok
 

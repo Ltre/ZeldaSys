@@ -2,13 +2,17 @@ import type {
   RigidBody,
   RevoluteImpulseJoint,
   World,
-} from '@dimforge/rapier3d';
+} from '@dimforge/rapier3d-compat';
 
 export const POC_A_BODY_COUNT = 50;
 export const POC_A_FIXED_JOINT_COUNT = 30;
 export const POC_A_REVOLUTE_JOINT_COUNT = 4;
 export const POC_A_MOTOR_COUNT = 2;
 export const POC_A_FAN_COUNT = 2;
+
+type RapierModule = typeof import('@dimforge/rapier3d-compat')['default'];
+
+let rapierModulePromise: Promise<RapierModule> | null = null;
 
 const IDENTITY_ROTATION = { w: 1, x: 0, y: 0, z: 0 } as const;
 const HALF_SPACING_X = 0.525;
@@ -55,8 +59,19 @@ export interface PocABenchmarkResult {
   nonFiniteBodyCount: number;
 }
 
+async function getRapier(): Promise<RapierModule> {
+  rapierModulePromise ??= import('@dimforge/rapier3d-compat').then(
+    async ({ default: RAPIER }) => {
+      await RAPIER.init();
+      return RAPIER;
+    },
+  );
+
+  return rapierModulePromise;
+}
+
 export async function createPocAPhysicsScene(): Promise<PocAPhysicsScene> {
-  const RAPIER = await import('@dimforge/rapier3d');
+  const RAPIER = await getRapier();
   const world = new RAPIER.World({ x: 0, y: -9.81, z: 0 });
   world.timestep = 1 / 60;
 
