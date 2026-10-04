@@ -1,7 +1,4 @@
-import {
-  runPocABenchmark,
-  type PocABenchmarkResult,
-} from '@zeldasys/physics';
+import { runPocABenchmark, type PocABenchmarkResult } from '@zeldasys/physics';
 import { useState } from 'react';
 
 export function PocAPanel() {
@@ -33,14 +30,18 @@ export function PocAPanel() {
         <strong>PoC-A · Rapier baseline</strong>
         <span>50 bodies · 30 fixed · 4 revolute · 2 motors · 2 fans</span>
       </div>
-      <button type="button" disabled={running} onClick={() => void runBenchmark()}>
+      <button
+        type="button"
+        disabled={running}
+        onClick={() => void runBenchmark()}
+      >
         {running ? 'Running…' : 'Run benchmark'}
       </button>
       {result ? (
         <output>
           avg {result.averageStepMs.toFixed(3)} ms · p95{' '}
-          {result.p95StepMs.toFixed(3)} ms · max {result.maxStepMs.toFixed(3)} ms ·
-          drift {result.maxAnchorDrift.toFixed(4)}
+          {result.p95StepMs.toFixed(3)} ms · max {result.maxStepMs.toFixed(3)}{' '}
+          ms · drift {result.maxAnchorDrift.toFixed(4)}
         </output>
       ) : null}
       {error ? <output className="poc-error">{error}</output> : null}

@@ -141,11 +141,11 @@ export async function createPocAPhysicsScene(): Promise<PocAPhysicsScene> {
 
     const localAnchorA = { x: HALF_SPACING_X, y: 0, z: 0 };
     const localAnchorB = { x: -HALF_SPACING_X, y: 0, z: 0 };
-    const params = RAPIER.JointData.revolute(
-      localAnchorA,
-      localAnchorB,
-      { x: 0, y: 0, z: 1 },
-    );
+    const params = RAPIER.JointData.revolute(localAnchorA, localAnchorB, {
+      x: 0,
+      y: 0,
+      z: 1,
+    });
     const joint = world.createImpulseJoint(
       params,
       bodyA,
