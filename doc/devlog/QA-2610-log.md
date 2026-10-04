@@ -279,9 +279,32 @@ Roadmap 的第一个产品开发 Gate 不是 UI，而是四个高风险 PoC：
 
 四项都通过后再冻结技术栈并进入完整 MVP 实现。
 
+## 2026-10-04 — PoC-A 中断点核对（Codex 接续）
+
+### 当前检查结论
+
+- 当前分支为 `dev/2610-s1`，HEAD 与 `origin/dev/2610-s1` 同为 `2af144d`。
+- 最新提交完成 Rapier compat 集成规范化；前一提交修复了普通 Rapier 包在当前 Vite / Vitest 工具链中的入口解析问题。
+- PoC-A 当前包含 50 个刚体、30 个 fixed joints、4 个 revolute joints、2 个 motors、2 个 fan-like forces，并测量物理 step、渲染 FPS、joint anchor drift、碰撞事件、最终接触穿透和非有限刚体。
+- 单个前台 Codex In-app Browser 桌面 Chromium 标签实测通过：FPS 60.1；physics step avg / p95 / max 为 0.414 / 0.600 / 1.300 ms；anchor drift 0.0010；最终 56 个 contact pairs；600 个 measured steps 中有 2 次 collision starts；最终时刻最深接触穿透 0.0005 m；invalid bodies 0；控制台无 error / warning。Google Chrome 品牌浏览器未专门实测。
+- Android 真机仍待验收：`adb devices -l` 返回空设备列表；环境缺少 `emulator`、`sdkmanager`、`avdmanager`，仓库也没有 Capacitor Android 工程，因此无法记录设备 FPS、温升或降频。
+- 测试、lint、typecheck、build 均已完成并通过；build 仍提示 client 与 Rapier 产物超过 500 kB chunk 建议阈值。开发事实已更新到 `dev-2610-features.md`。
+- 当前工作树有未暂存的既有与本轮修改；index 为空。Codex 客户端约定继续有效：不暂存、不提交。
+
+### 本轮 QA / 验收判断
+
+- 桌面性能结果是在关闭临时验收标签页后取得；多个同时运行的 Three.js 标签会争用渲染资源，因此最终记录只采用单个前台标签页的 600 步读数。
+- 碰撞开始事件在每个 measured step 计数；活动接触对与最深接触穿透在最后一个 measured step 读取，以免碰撞对遍历本身拉低 FPS。穿透数值代表最终帧的最大接触穿透，不代表整个测量窗口的历史峰值。
+- 50 个盒体落地后保持稳定连接；桌面 Chromium 未观察到穿过地面或约束发散。Android 真机 WebView 验收仍是 PoC-A 的未完成部分，Gate-1 暂不通过。
+- 下一步需在真实 Android 设备上运行同一场景并记录 FPS、物理 step、碰撞/穿透、温升与明显降频；按 roadmap 在 PoC-D 接入 Capacitor WebView 后再执行该项。
+
+### 接续路线
+
+先在 `dev/2610-s1` 补完并验收 PoC-A，记录桌面浏览器与 Android 真机结果；之后按 roadmap 完成 PoC-B 任意表面连接、PoC-C SVG 几何与碰撞体、PoC-D Capacitor Android 同源运行。四项 Gate-1 全通过后再进入完整 Domain Model 和产品实现。当前 Codex 客户端约定优先：开发完成不暂存、不提交。
+
 ---
 
-## 原始问答记录（固定追加区）`
+### 原始问答记录维护规则
 
 规则：
 
@@ -496,3 +519,58 @@ Android 首版使用 Capacitor；Tauri 留到未来桌面平台再评估。
 4. Capacitor Android 真机同源运行。
 
 四项全部通过 Gate-1 后，才正式冻结技术栈进入完整 MVP。
+
+
+[编号261004-5]问：
+
+这个项目在chatgpt开发了一半就意外中断，请你检查现有文档、git commit log、现有开发的代码，从中断的位置继续执行。在执行之前，我需要确认你找到了中断点在哪、下一步执行什么、总体项目目标是什么、全局路线怎样
+
+目前开发分支处于 dev/2610-s1 ，在本codex客户端约定：开发完代码不要提交/不要暂存（这个跟在chatgpt web页面约定的及时提交代码的约定不同）。
+
+我跟你的问+答的记录、你的推理记录、你的开发记录，在项目中都会有对应的位置存储，这个你要查出来，告诉我，我要确认你到底有没有看懂这些约定
+
+答：
+
+检查结果：当前分支是 `dev/2610-s1`，HEAD 与 origin 同为 `2af144d chore: normalize Rapier compat integration`。接续点在 Phase 1 的 PoC-A：50 刚体物理基准代码已经写出，随后修复并规范化了 Rapier compat 在 Vite / Vitest 工具链中的集成；目前没有桌面 Chrome 或 Android 真机验收结果，PoC-A 还不能算完成。
+
+PoC-A 现有实现测量物理 step 平均值、p95、最大值、joint anchor drift 和非有限刚体数，但还缺 roadmap / 技术选型要求的 render FPS、穿透/碰撞表现与 Android 设备结果。下一步应先补齐并验收 PoC-A，随后依次完成 PoC-B 任意表面粘合、PoC-C SVG 挤出与动态碰撞体、PoC-D Capacitor Android 同源运行；四项通过 Gate-1 后，才进入完整 Domain Model、Runtime Adapter、编辑器和其余 MVP 阶段。
+
+总体目标是一个 PWA / Android 优先、离线优先的 3D 物理建造沙盒：参数化或受限 SVG 零件、任意表面粘合、编辑/模拟状态切换、重力/碰撞/刚体与约束，以及 Wheel / Motor / Fan，典型作品约 50 个零件；首版不做服务端、账号云同步、角色、地图和多人。全局路线和分阶段验收见 `doc/roadmap/master/Initial Development Plans.md` 与 `doc/roadmap/master/Remaining Development Plans.md`。
+
+约定位置：问答原文与可审查的决策理由摘要写入 `doc/devlog/QA-2610-log.md`，其中原始问答固定放在文件尾部；隐藏内部思维链不保存。实际代码、配置、测试和验证事实写入 `doc/devlog/dev-2610-features.md`。最初开发 Prompt 与分支/操作提示在 `doc/prompt/dev-prompt-log/first.md`。该文件中的 ChatGPT Web 及时提交惯例由你当前明确的 Codex 本地约定覆盖：继续在 `dev/2610-s1` 工作，不暂存、不提交。
+
+本轮只做了只读检查和 QA 留档，没有继续 PoC 代码实现。请确认是否按“先完成 PoC-A 验收，再按 B、C、D 顺序推进”的路线继续。
+
+
+[编号261004-6]问：
+
+源码中带有Drop2Tunnel 名称和占位内容的模板 可以现在改成本项目风格的，避免日后被误解。
+
+请继续在`dev/2610-s1`  分支开发，除了约定的问+答的记录、你的推理记录、你的开发记录，还要最后提供git commit log用的title/description，要方便分别复制
+
+答：
+
+已把项目总览与总览模板中的 Drop2Tunnel 名称和占位内容改成 ZeldaSys 项目风格，避免后续照搬时产生误解。工作继续在 `dev/2610-s1`，按 Codex 本地约定不暂存、不提交。
+
+建议的 commit title：`docs: adapt overview templates for ZeldaSys`
+
+建议的 commit description：`Replace Drop2Tunnel template labels and placeholder content with ZeldaSys project guidance.`
+
+
+[编号261004-7]问：
+
+继续剩余事项：**补记本轮最终验证与 QA 问答；完成 PoC-A 桌面浏览器和 Android 真机验收
+
+答：
+
+桌面 PoC-A 已在单个前台 Codex In-app Browser 桌面 Chromium 标签页通过：50 bodies、30 fixed joints、4 revolute joints、2 motors、2 fans；600 个 measured steps 的 physics step avg / p95 / max 为 0.414 / 0.600 / 1.300 ms，FPS 60.1，anchor drift 0.0010，最终 56 个 contact pairs、2 次 collision starts、最终时刻最深接触穿透 0.0005 m、invalid bodies 0；控制台无 error / warning。该结果不是 Google Chrome 品牌浏览器的专门实测。
+
+最终工程验证通过：Vitest 2 个文件 / 2 个测试、ESLint、workspace TypeScript typecheck、Vite production build。build 仍有大 chunk 警告（client JS 约 763 kB、Rapier chunk 约 4.33 MB / 1.67 MB gzip）。
+
+Android 真机验收无法在当前环境完成：`adb devices -l` 没有设备，Android SDK 的 emulator 工具缺失，仓库目前也没有 Capacitor Android 工程。PoC-A 与 Gate-1 因此仍待真实 Android WebView 数据；需要连接开启 USB 调试的设备，并在 Capacitor Android 工程就绪后继续测 FPS、碰撞、温升和降频。
+
+本轮源码、开发记录和 QA 摘要均留在 `dev/2610-s1` 工作树中，没有暂存或提交。
+
+建议的 commit title：`feat: instrument PoC-A collision and rendering metrics`
+
+建议的 commit description：`Add collision diagnostics and instanced 50-body rendering; record desktop Chromium acceptance and keep Android WebView validation pending a connected device.`

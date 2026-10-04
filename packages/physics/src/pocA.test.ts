@@ -11,9 +11,13 @@ import {
 
 describe('PoC-A physics benchmark', () => {
   it('keeps the target 50-body joint scene finite and connected', async () => {
+    let measuredStepCount = 0;
     const result = await runPocABenchmark({
       warmupSteps: 30,
       measuredSteps: 120,
+      onMeasuredStep: () => {
+        measuredStepCount += 1;
+      },
     });
 
     expect(result.bodyCount).toBe(POC_A_BODY_COUNT);
@@ -22,7 +26,12 @@ describe('PoC-A physics benchmark', () => {
     expect(result.motorCount).toBe(POC_A_MOTOR_COUNT);
     expect(result.fanCount).toBe(POC_A_FAN_COUNT);
     expect(result.timestepSeconds).toBeCloseTo(1 / 60, 8);
+    expect(result.measuredWallTimeMs).toBeGreaterThanOrEqual(0);
+    expect(measuredStepCount).toBe(120);
     expect(result.nonFiniteBodyCount).toBe(0);
+    expect(result.collisionStartEventCount).toBeGreaterThan(0);
+    expect(result.activeContactPairCount).toBeGreaterThan(0);
+    expect(result.maxFinalContactPenetration).toBeGreaterThanOrEqual(0);
     expect(result.maxAnchorDrift).toBeLessThan(0.25);
     expect(result.averageStepMs).toBeGreaterThanOrEqual(0);
     expect(result.maxStepMs).toBeGreaterThanOrEqual(result.averageStepMs);

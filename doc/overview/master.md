@@ -1,166 +1,49 @@
-# Drop2Tunnel 功能与需求总览
+# ZeldaSys 项目总览
 
-> 本目录用于给后续开发者和 AI 提供“可追溯的项目事实”。它不仅描述现在有什么功能，还说明这些功能为什么存在、经历过哪些调整、当前代码如何实现，以及哪些历史方案已经被替代。
+> 本文是 ZeldaSys 的入口索引，帮助开发者区分产品目标、当前实现和后续计划。它不替代源码、需求记录或开发路线；涉及当前行为时，以代码为准。
 
-## 1. 文档基线
+## 产品定位
 
-本套总览的初始创建阶段已经完成并冻结。长期维护工作在 `dev/doc-overview` 进行；当前已完整覆盖的应用源码事实为：
+ZeldaSys 首版目标是一个 PWA / Android 优先、离线优先的 3D 物理建造沙盒。用户可以组合参数化零件或导入受限 SVG 轮廓，在零件任意表面建立连接，并在编辑态与模拟态之间切换。模拟包含重力、碰撞、刚体约束和 Wheel、Motor、Fan 等功能件。典型作品规模约为 50 个零件。
 
-- 源码 Commit：`待填写最后维护时基于的版本`
-- 源码提交时间：`2026-09-26T11:30:34Z`
-- 首轮整理日期：2026-xx-xx
-- 文档更新时间：2026-xx-xx
+首版暂不包含账号与云同步、服务端、角色、地图编辑、多人协作或 GLB / glTF 导入。
 
-精确增量锚点见 [VERSION.md](./VERSION.md)。
+## 当前开发状态
 
-**初始创建状态：已完成并冻结。** 文件级覆盖验收见 [COVERAGE.md](./COVERAGE.md)。
+当前工作分支为 `dev/2610-s1`。工程骨架（Phase 0）已建立。Phase 1 正在验证高风险技术 PoC：
 
-## 2. 产品总定位
+- **PoC-A — Rapier 物理基线：** 桌面 Chromium 已验收（60.1 FPS、physics step avg 0.414 ms、anchor drift 0.0010、最终穿透 0.0005 m）；Android 真机 WebView 待设备与 Capacitor 工程就绪后验收。
+- **PoC-B — 任意表面连接：** 尚待实现与验证。
+- **PoC-C — SVG 自定义零件：** 尚待实现与验证。
+- **PoC-D — Capacitor Android 同源运行：** 尚待实现与验证。
 
-xxxxxxxxxxxxxxxx
-- xxxxxxxxx
-- xxxxxxxxx
-- xxxxxxxxx
-- xxxxxxxxx
+四项 PoC 全部通过 Gate-1 后，才进入完整产品实现。状态更新以开发日志和最近代码为准。
 
-## 3. 建议阅读顺序
+## 建议阅读顺序
 
-如果 AI 第一次接手项目：
+1. [README](../../README.md)：仓库简述。
+2. [需求基线 v2](../prompt/idea/first/requirements-discussion-v2.md)：已确认的首版产品语义。
+3. [技术选型](../prompt/idea/first/technology-selection-v0.md)：架构边界、技术选择及 PoC 验收条件。
+4. [成熟案例调研](../prompt/idea/first/case-study-research-v0.md)：产品与交互参考。
+5. [初期开发计划](../roadmap/master/Initial%20Development%20Plans.md)：Phase 0 到 MVP 验收的路线。
+6. [后期剩余计划](../roadmap/master/Remaining%20Development%20Plans.md)：MVP 之后的候选方向。
+7. [QA 与决策日志](../devlog/QA-2610-log.md) 和 [开发记录](../devlog/dev-2610-features.md)：讨论、决策理由及实际实施记录。
+8. [初始开发 Prompt 记录](../prompt/dev-prompt-log/first.md)：最初需求和协作约定。
 
-1. 本 `master.md`；
-2. [architecture.md](./architecture.md)；
-3. [source-map.md](./source-map.md)；
-4. 当前任务所属模块文档；
-5. [tests-and-regressions.md](./tests-and-regressions.md)；
-6. 对应历史时间线；
-7. 再阅读具体源码 / Prompt / Devlog。
+## 代码导航
 
-## 4. 模块导航
+- `apps/client/`：React + Vite 客户端；`src/runtime/` 管理 Three.js 场景，`src/ui/` 放置界面。
+- `packages/domain/`：与 UI、渲染及物理引擎解耦的领域数据；目前包含版本化的空 BuildDocument 基础。
+- `packages/geometry/`：几何能力包；SVG 导入 PoC 尚未实现。
+- `packages/physics/`：Rapier 物理适配与 PoC-A 基准。
+- `.github/workflows/ci.yml`：持续集成配置。
 
-### 核心架构与隧道
+## 信息来源规则
 
-- [architecture.md](./architecture.md) — 运行架构、数据边界、前后端职责、当前与未来设计边界。
-- [aaaaaa.md](./aaaaaa.md) — aaa、aaa、aaa、aaa、aaa、aaa、aaa、aaa。
-- [aaaaaa.md](./aaaaaa.md) — aaa、aaa、aaa、aaa、aaa、aaa、aaa、aaa。
+- **当前运行行为：** 以相应源码与测试为准。
+- **已确认需求：** 以 `doc/prompt/idea/first/requirements-discussion-v2.md` 和 QA 决策日志为准。
+- **计划与验收标准：** 以 `doc/roadmap/master/` 和技术选型文档为准。
+- **实际开发历史：** 以 `doc/devlog/dev-*-features.md` 和 Git commit log 为准。
+- **问答与可审查的推理摘要：** 以 `doc/devlog/QA-*-log.md` 为准；该日志不保存隐藏的内部思维链。
 
-### 其它其它其它其它其它其它其它其它其它其它
-
-- [aaaaaa.md](./aaaaaa.md) — aaa、aaa、aaa、aaa、aaa、aaa、aaa、aaa。
-- [aaaaaa.md](./aaaaaa.md) — aaa、aaa、aaa、aaa、aaa、aaa、aaa、aaa。
-- [aaaaaa.md](./aaaaaa.md) — aaa、aaa、aaa、aaa、aaa、aaa、aaa、aaa。
-- [aaaaaa.md](./aaaaaa.md) — aaa、aaa、aaa、aaa、aaa、aaa、aaa、aaa。
-- [aaaaaa.md](./aaaaaa.md) — aaa、aaa、aaa、aaa、aaa、aaa、aaa、aaa。
-- [aaaaaa.md](./aaaaaa.md) — aaa、aaa、aaa、aaa、aaa、aaa、aaa、aaa。
-
-### 其它其它其它其它其它其它其它其它其它其它
-
-- [aaaaaa.md](./aaaaaa.md) — aaa、aaa、aaa、aaa、aaa、aaa、aaa、aaa。
-- [aaaaaa.md](./aaaaaa.md) — aaa、aaa、aaa、aaa、aaa、aaa、aaa、aaa。
-- [aaaaaa.md](./aaaaaa.md) — aaa、aaa、aaa、aaa、aaa、aaa、aaa、aaa。
-- [aaaaaa.md](./aaaaaa.md) — aaa、aaa、aaa、aaa、aaa、aaa、aaa、aaa。
-- [aaaaaa.md](./aaaaaa.md) — aaa、aaa、aaa、aaa、aaa、aaa、aaa、aaa。
-- [aaaaaa.md](./aaaaaa.md) — aaa、aaa、aaa、aaa、aaa、aaa、aaa、aaa。
-
-
-### 平台与运维
-
-- [aaaaaa.md](./aaaaaa.md) — aaa、aaa、aaa、aaa、aaa、aaa、aaa、aaa。
-- [aaaaaa.md](./aaaaaa.md) — aaa、aaa、aaa、aaa、aaa、aaa、aaa、aaa。
-- [aaaaaa.md](./aaaaaa.md) — aaa、aaa、aaa、aaa、aaa、aaa、aaa、aaa。
-
-
-### 调研导航
-
-- [source-map.md](./source-map.md) — 当前源码、Tests、Devlog、Prompt、Idea 的模块级对照索引。
-- [COVERAGE.md](./COVERAGE.md) — 初始创建阶段的历史范围、当前源码文件归属和完成判定。
-- [history/README.md](./history/README.md) — 历史时间线入口。
-
-## 5. 信息来源优先级
-
-### 5.1 当前实现事实
-
-优先读取：(都是示例格式)
-
-- `foreaxample.js`
-- `foreaxample.js`
-- `foreaxample.js`
-- `foreaxample.js`
-- `foreaxample.js`
-- `foreaxample.js`
-
-
-源码用于确认“现在真实执行什么”。
-
-### 5.2 需求初衷与演进
-
-重点读取：
-
-- `doc/prompt/dev-prompt-log/*`
-- `doc/devlog/*`
-- `doc/prompt/ideas/*`
-- Git Log。
-
-Prompt 往往同时包含：原始需求、人工复现、Codex 处理说明、用户下一轮反例。必须按时间判断后者是否覆盖前者。
-
-### 5.3 README / 旧 Overview
-
-`README.md`、`doc/other/PROJECT_OVERVIEW.md` 等可帮助理解早期产品定位，但其版本早于当前基线，不能单独作为当前事实。
-
-## 6. “当前能力”与“计划”的写法
-
-本目录刻意区分：
-
-- **当前源码已有**；
-- **历史上有过但已废弃**；
-- **Prompt 已提出但尚未进入源码基线**；
-- **未来架构设计**。
-
-例如：
-
-- 示例示例示例示例示例示例示例示例示例示例示例示例示例示例示例示例
-- 示例示例示例示例示例示例示例示例示例示例示例示例示例示例示例示例
-- 示例示例示例示例示例示例示例示例示例示例示例示例示例示例示例示例
-- 示例示例示例示例示例示例示例示例示例示例示例示例示例示例示例示例
-- 示例示例示例示例示例示例示例示例示例示例示例示例示例示例示例示例
-
-后续更新时，仍应只在功能真正合入目标源码后把它从“计划”移动到“当前实现”。
-
-## 7. 维护原则
-
-1. **保留需求初衷**：不只写按钮，还解释为什么存在。
-2. **记录 UI 细节**：稳定 DOM、位置、PC/移动差异、浮层、手势、history。
-3. **记录执行链路**：XXX → XXX → XXX → XXX → XXX → XXX → XXX → XXX。
-4. **记录数据所有权**：Tech1、Tech2、Tech2、Tech2、Tech2、Tech2、Tech2、TechN。
-5. **记录失败路径**：取消、离线、刷新、重启、缓存丢失、远端失败、旧版本、示例文字、示例文字。
-6. **标明历史方案**：已废弃方案不能和现状混写。
-7. **保留高风险回归**：Tech1、Tech2、Tech2、Tech2、Tech2、Tech2、Tech2、TechN。
-8. **避免名字推断**：无法从源码/日志/Prompt 支持的结论标记待核实。
-9. **重视人工验收**：下一轮用户实测可推翻上一轮“已修复”。
-10. **更新 VERSION**：每次把最新代码合进 `dev/doc-overview` 后，先从旧锚点做增量调研。
-
-## 8. 本轮首轮扫描范围
-
-首轮建立时已经：
-
-- 枚举仓库顶层、`server`、`client`、`pages`、`tests`、`scripts`、`doc`、`prompt`；
-- 唧唧歪歪唧唧歪歪唧唧歪歪唧唧歪歪唧唧歪歪唧唧歪歪唧唧歪歪；
-- 唧唧歪歪唧唧歪歪唧唧歪歪唧唧歪歪唧唧歪歪唧唧歪歪唧唧歪歪；
-- 唧唧歪歪唧唧歪歪唧唧歪歪唧唧歪歪唧唧歪歪唧唧歪歪唧唧歪歪；
-- 唧唧歪歪唧唧歪歪唧唧歪歪唧唧歪歪唧唧歪歪唧唧歪歪唧唧歪歪；
-- 唧唧歪歪唧唧歪歪唧唧歪歪唧唧歪歪唧唧歪歪唧唧歪歪唧唧歪歪；
-- 唧唧歪歪唧唧歪歪唧唧歪歪唧唧歪歪唧唧歪歪唧唧歪歪唧唧歪歪；
-- 唧唧歪歪唧唧歪歪唧唧歪歪唧唧歪歪唧唧歪歪唧唧歪歪唧唧歪歪；
-
-“首轮完整”表示已经建立全模块导航与主要行为/历史边界，不表示以后无需读源码。本文档体系的目的正是让后续增量更新不再从零开始。唧唧歪歪唧唧歪歪唧唧歪歪唧唧歪歪唧唧歪歪。
-
-## 9. 后续 Agent 的增量维护规则
-
-这是本套文档的长期维护约定，后续接手者必须遵循：
-
-1. **工作来源固定看 `dev/doc-overview` 当前内容。** 用户会把其它开发分支中需要沉淀的成果及时合并到 `dev/doc-overview`。Agent 不需要追踪“某篇文档最初来自哪个开发分支”，也不要在模块文档头部写死“基于某分支”。
-2. **增量扫描时排除 `doc/overview/**`。** 需要关注的是 `dev/doc-overview` 中除本目录以外的最新源码、Tests、Prompt、Devlog、Ideas、Guide、配置和其它相关文档变化；`doc/overview` 是整理结果，不应反过来作为判断“项目新变化”的输入。
-3. **Git Commit 是可复现锚点，分支名不是。** 模块文档可以保留“源码基线 Commit”，但必须同时写“文档更新时间”。分支会持续切换、合并，不能用分支名表达某篇文档的事实基线。
-4. **只推进已经完整覆盖的源码锚点。** 如果 `dev/doc-overview` HEAD 后面只有 `docs/overview/**` 文档提交，而没有新的非 Overview 项目变化，则全局源码锚点不需要推进。
-5. **判断变更范围时，以非 Overview 路径为准。** 实际比较应等价于“从上次源码锚点到当前 `dev/doc-overview`，忽略 `docs/overview/**` 后还发生了什么变化”，再据此选择需要更新的模块文档。
-6. **不要主动跨分支拼接未合并事实。** 如果某项开发只存在于其它分支、尚未进入 `dev/doc-overview`，默认不把它写成当前实现；除非用户明确要求研究该分支。
-7. **每次修改模块文档都刷新更新时间。** Commit 表示本文已核对到的源码事实锚点；“文档更新时间”表示该 Markdown 最近一次实际整理日期，两者含义不同。
+需求或实现变化时，先核实对应源码与记录，再更新本文中的状态和导航。不要把路线计划写成已完成能力。

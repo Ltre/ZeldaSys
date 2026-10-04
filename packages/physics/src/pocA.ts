@@ -1,4 +1,6 @@
 import type {
+  Collider,
+  EventQueue,
   RigidBody,
   RevoluteImpulseJoint,
   World,
@@ -33,6 +35,7 @@ interface JointProbe {
 export interface PocAPhysicsScene {
   world: World;
   bodies: readonly RigidBody[];
+  colliders: readonly Collider[];
   fanBodies: readonly RigidBody[];
   jointProbes: readonly JointProbe[];
   revoluteJoints: readonly RevoluteImpulseJoint[];
@@ -41,6 +44,10 @@ export interface PocAPhysicsScene {
 export interface PocABenchmarkOptions {
   warmupSteps?: number;
   measuredSteps?: number;
+  yieldBetweenMeasuredSteps?: boolean;
+  onSceneCreated?: (scene: PocAPhysicsScene) => void;
+  onMeasurementStart?: () => void;
+  onMeasuredStep?: (scene: PocAPhysicsScene) => void;
 }
 
 export interface PocABenchmarkResult {
@@ -52,11 +59,15 @@ export interface PocABenchmarkResult {
   timestepSeconds: number;
   warmupSteps: number;
   measuredSteps: number;
+  measuredWallTimeMs: number;
   averageStepMs: number;
   p95StepMs: number;
   maxStepMs: number;
   maxAnchorDrift: number;
   nonFiniteBodyCount: number;
+  collisionStartEventCount: number;
+  activeContactPairCount: number;
+  maxFinalContactPenetration: number;
 }
 
 async function getRapier(): Promise<RapierModule> {
@@ -75,11 +86,15 @@ export async function createPocAPhysicsScene(): Promise<PocAPhysicsScene> {
   const world = new RAPIER.World({ x: 0, y: -9.81, z: 0 });
   world.timestep = 1 / 60;
 
-  world.createCollider(
-    RAPIER.ColliderDesc.cuboid(20, 0.25, 20)
-      .setTranslation(0, -0.25, 0)
-      .setFriction(0.9),
-  );
+  const collisionEvents = RAPIER.ActiveEvents.COLLISION_EVENTS;
+  const colliders: Collider[] = [
+    world.createCollider(
+      RAPIER.ColliderDesc.cuboid(20, 0.25, 20)
+        .setTranslation(0, -0.25, 0)
+        .setFriction(0.9)
+        .setActiveEvents(collisionEvents),
+    ),
+  ];
 
   const bodies: RigidBody[] = [];
 
@@ -93,12 +108,14 @@ export async function createPocAPhysicsScene(): Promise<PocAPhysicsScene> {
         .setAngularDamping(0.1),
     );
 
-    world.createCollider(
+    const collider = world.createCollider(
       RAPIER.ColliderDesc.cuboid(0.45, 0.25, 0.35)
         .setDensity(1)
-        .setFriction(0.8),
+        .setFriction(0.8)
+        .setActiveEvents(collisionEvents),
       body,
     );
+    colliders.push(collider);
     bodies.push(body);
   }
 
@@ -188,13 +205,17 @@ export async function createPocAPhysicsScene(): Promise<PocAPhysicsScene> {
   return {
     world,
     bodies,
+    colliders,
     fanBodies,
     jointProbes,
     revoluteJoints,
   };
 }
 
-export function stepPocAPhysicsScene(scene: PocAPhysicsScene): void {
+export function stepPocAPhysicsScene(
+  scene: PocAPhysicsScene,
+  eventQueue?: EventQueue,
+): void {
   scene.fanBodies.forEach((body, index) => {
     body.resetForces(true);
     body.addForce(
@@ -207,7 +228,7 @@ export function stepPocAPhysicsScene(scene: PocAPhysicsScene): void {
     );
   });
 
-  scene.world.step();
+  scene.world.step(eventQueue);
 }
 
 export async function runPocABenchmark(
@@ -216,18 +237,38 @@ export async function runPocABenchmark(
   const warmupSteps = options.warmupSteps ?? 120;
   const measuredSteps = options.measuredSteps ?? 600;
   const scene = await createPocAPhysicsScene();
+  const RAPIER = await getRapier();
+  const eventQueue = new RAPIER.EventQueue(false);
 
   try {
+    options.onSceneCreated?.(scene);
+
     for (let index = 0; index < warmupSteps; index += 1) {
-      stepPocAPhysicsScene(scene);
+      stepPocAPhysicsScene(scene, eventQueue);
+      eventQueue.drainCollisionEvents(() => undefined);
     }
 
     const durations: number[] = [];
+    let collisionStartEventCount = 0;
+    const measuredStartedAt = performance.now();
+    options.onMeasurementStart?.();
     for (let index = 0; index < measuredSteps; index += 1) {
       const startedAt = performance.now();
-      stepPocAPhysicsScene(scene);
+      stepPocAPhysicsScene(scene, eventQueue);
+      eventQueue.drainCollisionEvents((_first, _second, started) => {
+        if (started) {
+          collisionStartEventCount += 1;
+        }
+      });
       durations.push(performance.now() - startedAt);
+      options.onMeasuredStep?.(scene);
+
+      if (options.yieldBetweenMeasuredSteps) {
+        await waitForNextFrame();
+      }
     }
+    const measuredWallTimeMs = performance.now() - measuredStartedAt;
+    const finalContacts = measureContacts(scene);
 
     const sorted = [...durations].sort((left, right) => left - right);
     const total = durations.reduce((sum, duration) => sum + duration, 0);
@@ -245,15 +286,59 @@ export async function runPocABenchmark(
       timestepSeconds: scene.world.timestep,
       warmupSteps,
       measuredSteps,
+      measuredWallTimeMs,
       averageStepMs: total / Math.max(durations.length, 1),
       p95StepMs: sorted[p95Index] ?? 0,
       maxStepMs: sorted.at(-1) ?? 0,
       maxAnchorDrift: measureMaxAnchorDrift(scene.jointProbes),
       nonFiniteBodyCount: countNonFiniteBodies(scene.bodies),
+      collisionStartEventCount,
+      activeContactPairCount: finalContacts.activePairCount,
+      maxFinalContactPenetration: finalContacts.maxPenetration,
     };
   } finally {
+    eventQueue.free();
     scene.world.free();
   }
+}
+
+function measureContacts(scene: PocAPhysicsScene): {
+  activePairCount: number;
+  maxPenetration: number;
+} {
+  let activePairCount = 0;
+  let maxPenetration = 0;
+
+  for (const collider of scene.colliders) {
+    scene.world.contactPairsWith(collider, (other) => {
+      if (collider.handle >= other.handle) {
+        return;
+      }
+
+      activePairCount += 1;
+      scene.world.contactPair(collider, other, (manifold) => {
+        for (let index = 0; index < manifold.numContacts(); index += 1) {
+          maxPenetration = Math.max(
+            maxPenetration,
+            -manifold.contactDist(index),
+          );
+        }
+      });
+    });
+  }
+
+  return { activePairCount, maxPenetration: Math.max(0, maxPenetration) };
+}
+
+function waitForNextFrame(): Promise<void> {
+  return new Promise((resolve) => {
+    if (typeof requestAnimationFrame === 'function') {
+      requestAnimationFrame(() => resolve());
+      return;
+    }
+
+    setTimeout(resolve, 0);
+  });
 }
 
 function countNonFiniteBodies(bodies: readonly RigidBody[]): number {

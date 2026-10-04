@@ -1,9 +1,15 @@
-import { runPocABenchmark, type PocABenchmarkResult } from '@zeldasys/physics';
 import { useState } from 'react';
 
-export function PocAPanel() {
+import type {
+  PocAViewportBenchmarkResult,
+  ThreeViewport,
+} from '../runtime/ThreeViewport';
+
+export function PocAPanel({ viewport }: { viewport: ThreeViewport | null }) {
   const [running, setRunning] = useState(false);
-  const [result, setResult] = useState<PocABenchmarkResult | null>(null);
+  const [result, setResult] = useState<PocAViewportBenchmarkResult | null>(
+    null,
+  );
   const [error, setError] = useState<string | null>(null);
 
   const runBenchmark = async () => {
@@ -11,8 +17,12 @@ export function PocAPanel() {
     setError(null);
 
     try {
+      if (!viewport) {
+        throw new Error('3D viewport is not ready');
+      }
+
       setResult(
-        await runPocABenchmark({
+        await viewport.runPocABenchmark({
           warmupSteps: 120,
           measuredSteps: 600,
         }),
@@ -32,17 +42,26 @@ export function PocAPanel() {
       </div>
       <button
         type="button"
-        disabled={running}
+        disabled={running || !viewport}
         onClick={() => void runBenchmark()}
       >
         {running ? 'Running…' : 'Run benchmark'}
       </button>
       {result ? (
-        <output>
-          avg {result.averageStepMs.toFixed(3)} ms · p95{' '}
-          {result.p95StepMs.toFixed(3)} ms · max {result.maxStepMs.toFixed(3)}{' '}
-          ms · drift {result.maxAnchorDrift.toFixed(4)}
-        </output>
+        <>
+          <output>
+            avg {result.averageStepMs.toFixed(3)} ms · p95{' '}
+            {result.p95StepMs.toFixed(3)} ms · max {result.maxStepMs.toFixed(3)}{' '}
+            ms · FPS {result.renderFps.toFixed(1)} · drift{' '}
+            {result.maxAnchorDrift.toFixed(4)}
+          </output>
+          <output>
+            final active pairs {result.activeContactPairCount} · collision
+            starts {result.collisionStartEventCount} · deepest final penetration{' '}
+            {result.maxFinalContactPenetration.toFixed(4)} m
+          </output>
+          <output>invalid bodies {result.nonFiniteBodyCount}</output>
+        </>
       ) : null}
       {error ? <output className="poc-error">{error}</output> : null}
     </aside>
